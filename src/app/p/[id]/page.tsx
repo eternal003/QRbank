@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import { getLink } from '@/lib/kv';
 import TransferPageClient from './TransferPageClient';
 
+export const runtime = 'edge';
+
 interface PageProps {
   params: Promise<{ id: string }>;
 }
