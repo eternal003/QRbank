@@ -1,5 +1,22 @@
-import fs from 'fs';
-import path from 'path';
+import { getRequestContext } from '@cloudflare/next-on-pages';
+
+// Minimal D1 types for TypeScript
+interface D1Result<T = unknown> {
+  results: T[];
+  success: boolean;
+  meta: any;
+}
+
+interface D1PreparedStatement {
+  bind(...values: any[]): D1PreparedStatement;
+  first<T = unknown>(colName?: string): Promise<T | null>;
+  run<T = unknown>(): Promise<D1Result<T>>;
+  all<T = unknown>(): Promise<D1Result<T>>;
+}
+
+interface D1Database {
+  prepare(query: string): D1PreparedStatement;
+}
 
 export interface LinkData {
   id: string;
@@ -10,108 +27,81 @@ export interface LinkData {
   kakaoPayUrl?: string;
 }
 
-// For local development: use a JSON file as mock KV store
-const DATA_DIR = path.join(process.cwd(), '.data');
-const DATA_FILE = path.join(DATA_DIR, 'links.json');
+// In-memory fallback for local development without Wrangler
+const inMemoryStore = new Map<string, LinkData>();
 
-function ensureDataDir() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-  if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, '{}', 'utf-8');
-  }
-}
-
-function readStore(): Record<string, LinkData> {
-  ensureDataDir();
-  const raw = fs.readFileSync(DATA_FILE, 'utf-8');
+function getDb() {
   try {
-    const parsed = JSON.parse(raw);
-    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-      console.error('Invalid data format in links.json, resetting to empty store');
-      return {};
-    }
-    return parsed;
+    const ctx = getRequestContext();
+    const env = ctx?.env as any;
+    if (env?.DB) return env.DB as D1Database;
   } catch (e) {
-    console.error('Failed to parse links.json, resetting to empty store:', e);
-    return {};
+    // Not running in Cloudflare context
   }
-}
-
-// Atomic write: write to temp file first, then rename to avoid partial writes
-function writeStore(data: Record<string, LinkData>) {
-  ensureDataDir();
-  const tempFile = path.join(DATA_DIR, `links.tmp.${Date.now()}.json`);
-  try {
-    fs.writeFileSync(tempFile, JSON.stringify(data, null, 2), 'utf-8');
-    fs.renameSync(tempFile, DATA_FILE);
-  } catch (e) {
-    // Clean up temp file on failure
-    try { fs.unlinkSync(tempFile); } catch { /* ignore */ }
-    throw e;
-  }
-}
-
-// Simple write queue to prevent concurrent read-modify-write race conditions
-let writeQueue: Promise<void> = Promise.resolve();
-
-function withWriteLock<T>(fn: () => T): Promise<T> {
-  const result = writeQueue.then(fn);
-  // Update queue to wait for this operation (ignore errors for queue chaining)
-  writeQueue = result.then(() => {}, () => {});
-  return result;
+  return null;
 }
 
 export async function saveLink(data: LinkData): Promise<void> {
-  // TODO: In production (Cloudflare), use KV binding:
-  // const kv = (process.env as any).LINKS_KV;
-  // await kv.put(data.id, JSON.stringify(data));
-
-  return withWriteLock(() => {
-    const store = readStore();
-    store[data.id] = data;
-    writeStore(store);
-  });
+  const db = getDb();
+  if (db) {
+    await db.prepare(
+      'INSERT INTO links (id, bankName, accountNumber, accountHolder, kakaoPayUrl, createdAt) VALUES (?, ?, ?, ?, ?, ?)'
+    ).bind(
+      data.id, data.bankName, data.accountNumber, data.accountHolder, data.kakaoPayUrl || null, data.createdAt
+    ).run();
+  } else {
+    inMemoryStore.set(data.id, data);
+  }
 }
 
 export async function getLink(id: string): Promise<LinkData | null> {
-  // TODO: In production (Cloudflare), use KV binding:
-  // const kv = (process.env as any).LINKS_KV;
-  // const val = await kv.get(id);
-  // return val ? JSON.parse(val) : null;
-
-  const store = readStore();
-  return store[id] || null;
+  const db = getDb();
+  if (db) {
+    const stmt = await db.prepare('SELECT * FROM links WHERE id = ?').bind(id).first<LinkData>();
+    return stmt || null;
+  }
+  return inMemoryStore.get(id) || null;
 }
 
 export async function getAllLinks(): Promise<LinkData[]> {
-  const store = readStore();
-  return Object.values(store).sort(
+  const db = getDb();
+  if (db) {
+    const { results } = await db.prepare('SELECT * FROM links ORDER BY createdAt DESC').all<LinkData>();
+    return results || [];
+  }
+  return Array.from(inMemoryStore.values()).sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 }
 
 export async function deleteLink(id: string): Promise<boolean> {
-  return withWriteLock(() => {
-    const store = readStore();
-    if (store[id]) {
-      delete store[id];
-      writeStore(store);
-      return true;
-    }
-    return false;
-  });
+  const db = getDb();
+  if (db) {
+    const info = await db.prepare('DELETE FROM links WHERE id = ?').bind(id).run();
+    return info.meta.changes > 0;
+  }
+  return inMemoryStore.delete(id);
 }
 
 export async function updateLink(id: string, updates: Partial<LinkData>): Promise<LinkData | null> {
-  return withWriteLock(() => {
-    const store = readStore();
-    if (store[id]) {
-      store[id] = { ...store[id], ...updates };
-      writeStore(store);
-      return store[id];
-    }
-    return null;
-  });
+  const db = getDb();
+  if (db) {
+    const existing = await getLink(id);
+    if (!existing) return null;
+    const merged = { ...existing, ...updates };
+    await db.prepare(
+      'UPDATE links SET bankName = ?, accountNumber = ?, accountHolder = ?, kakaoPayUrl = ? WHERE id = ?'
+    ).bind(
+      merged.bankName, merged.accountNumber, merged.accountHolder, merged.kakaoPayUrl || null, id
+    ).run();
+    return merged;
+  }
+  
+  const existing = inMemoryStore.get(id);
+  if (existing) {
+    const merged = { ...existing, ...updates };
+    inMemoryStore.set(id, merged);
+    return merged;
+  }
+  return null;
 }

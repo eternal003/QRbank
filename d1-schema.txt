@@ -1,0 +1,12 @@
+-- Cloudflare D1 테이블 생성용 쿼리
+-- 이 내용을 복사하여 Cloudflare 대시보드의 D1 콘솔에서 실행하시거나, 
+-- wrangler d1 execute <DB이름> --file=d1-schema.txt 명령어로 실행하시면 됩니다.
+
+CREATE TABLE IF NOT EXISTS links (
+  id TEXT PRIMARY KEY,
+  bankName TEXT NOT NULL,
+  accountNumber TEXT NOT NULL,
+  accountHolder TEXT NOT NULL,
+  kakaoPayUrl TEXT,
+  createdAt TEXT NOT NULL
+);

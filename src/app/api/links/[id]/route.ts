@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getLink, deleteLink, updateLink } from '@/lib/kv';
 import { sanitizeInput, cleanAccountNumber } from '@/lib/utils';
 
+export const runtime = 'edge';
+
 // Input length limits (keep in sync with links/route.ts)
 const MAX_BANK_NAME = 20;
 const MAX_ACCOUNT_NUMBER = 30;
