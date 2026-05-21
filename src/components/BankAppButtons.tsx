@@ -18,8 +18,14 @@ export default function BankAppButtons({ bankName, accountNumber, kakaoPayUrl }:
   const [copiedFor, setCopiedFor] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
-  const featuredBanks = BANKS.filter((b) => FEATURED_CODES.includes(b.code));
-  const otherBanks = BANKS.filter((b) => !FEATURED_CODES.includes(b.code));
+  const featuredBanks = BANKS.filter((b) => {
+    if (b.code === 'kakaopay' && !kakaoPayUrl) return false;
+    return FEATURED_CODES.includes(b.code);
+  });
+  const otherBanks = BANKS.filter((b) => {
+    if (b.code === 'kakaopay' && !kakaoPayUrl) return false;
+    return !FEATURED_CODES.includes(b.code);
+  });
 
   useEffect(() => {
     setMounted(true);
