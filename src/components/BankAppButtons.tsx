@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { BANKS } from '@/lib/banks';
 import { copyToClipboard } from '@/lib/utils';
@@ -17,18 +17,25 @@ const FEATURED_CODES = ['toss', 'kakaopay'];
 export default function BankAppButtons({ bankName, accountNumber, kakaoPayUrl }: BankAppButtonsProps) {
   const [copiedFor, setCopiedFor] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const featuredBanks = BANKS.filter((b) => {
+  const featuredBanks = useMemo(() => BANKS.filter((b) => {
     if (b.code === 'kakaopay' && !kakaoPayUrl) return false;
     return FEATURED_CODES.includes(b.code);
-  });
-  const otherBanks = BANKS.filter((b) => {
+  }), [kakaoPayUrl]);
+  const otherBanks = useMemo(() => BANKS.filter((b) => {
     if (b.code === 'kakaopay' && !kakaoPayUrl) return false;
     return !FEATURED_CODES.includes(b.code);
-  });
+  }), [kakaoPayUrl]);
 
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => {
+      setMounted(true);
+    }, 0);
+    return () => {
+      clearTimeout(timer);
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    };
   }, []);
 
   const handleBankClick = useCallback(
@@ -70,7 +77,8 @@ export default function BankAppButtons({ bankName, accountNumber, kakaoPayUrl }:
       copyToClipboard(accountNumber).catch(console.error);
       
       setCopiedFor(bank.code);
-      setTimeout(() => setCopiedFor(null), 3000);
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = setTimeout(() => setCopiedFor(null), 3000);
     },
     [bankName, accountNumber, kakaoPayUrl]
   );
@@ -128,6 +136,7 @@ export default function BankAppButtons({ bankName, accountNumber, kakaoPayUrl }:
             key={bank.code}
             className="bank-grid-compact__item"
             onClick={() => handleBankClick(bank)}
+            aria-label={`${bank.displayName || bank.name} 앱 열기`}
           >
             <div className="bank-grid-compact__logo-container">
               {bank.logo ? (

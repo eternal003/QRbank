@@ -4,11 +4,15 @@ import { getRequestContext } from '@cloudflare/next-on-pages';
 interface D1Result<T = unknown> {
   results: T[];
   success: boolean;
-  meta: any;
+  meta: {
+    duration?: number;
+    changes: number;
+    last_row_id?: number | string | null;
+  };
 }
 
 interface D1PreparedStatement {
-  bind(...values: any[]): D1PreparedStatement;
+  bind(...values: unknown[]): D1PreparedStatement;
   first<T = unknown>(colName?: string): Promise<T | null>;
   run<T = unknown>(): Promise<D1Result<T>>;
   all<T = unknown>(): Promise<D1Result<T>>;
@@ -33,9 +37,9 @@ const inMemoryStore = new Map<string, LinkData>();
 function getDb() {
   try {
     const ctx = getRequestContext();
-    const env = ctx?.env as any;
+    const env = ctx?.env as Record<string, unknown> | undefined;
     if (env?.DB) return env.DB as D1Database;
-  } catch (e) {
+  } catch {
     // Not running in Cloudflare context
   }
   return null;
@@ -66,12 +70,12 @@ export async function getLink(id: string): Promise<LinkData | null> {
 export async function getAllLinks(): Promise<LinkData[]> {
   const db = getDb();
   if (db) {
-    const { results } = await db.prepare('SELECT * FROM links ORDER BY createdAt DESC').all<LinkData>();
+    const { results } = await db.prepare('SELECT * FROM links ORDER BY createdAt DESC LIMIT 200').all<LinkData>();
     return results || [];
   }
   return Array.from(inMemoryStore.values()).sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
+  ).slice(0, 200);
 }
 
 export async function deleteLink(id: string): Promise<boolean> {
@@ -88,7 +92,10 @@ export async function updateLink(id: string, updates: Partial<LinkData>): Promis
   if (db) {
     const existing = await getLink(id);
     if (!existing) return null;
-    const merged = { ...existing, ...updates };
+    // Protect immutable fields from being overwritten
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id: _id, createdAt: _ca, ...safeUpdates } = updates as Record<string, unknown>;
+    const merged = { ...existing, ...safeUpdates } as LinkData;
     await db.prepare(
       'UPDATE links SET bankName = ?, accountNumber = ?, accountHolder = ?, kakaoPayUrl = ? WHERE id = ?'
     ).bind(
@@ -99,7 +106,9 @@ export async function updateLink(id: string, updates: Partial<LinkData>): Promis
   
   const existing = inMemoryStore.get(id);
   if (existing) {
-    const merged = { ...existing, ...updates };
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id: _id, createdAt: _ca, ...safeUpdates } = updates as Record<string, unknown>;
+    const merged = { ...existing, ...safeUpdates } as LinkData;
     inMemoryStore.set(id, merged);
     return merged;
   }

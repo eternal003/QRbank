@@ -67,3 +67,19 @@ export function cleanAccountNumber(value: string): string {
   return value.replace(/[^0-9-]/g, '');
 }
 
+/**
+ * Validate that a URL belongs to an allowed KakaoPay domain.
+ * Prevents phishing by restricting to known kakaopay.com subdomains.
+ */
+export function isValidKakaoPayUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return (
+      parsed.protocol === 'https:' &&
+      (parsed.hostname === 'qr.kakaopay.com' ||
+        parsed.hostname.endsWith('.kakaopay.com'))
+    );
+  } catch {
+    return false;
+  }
+}

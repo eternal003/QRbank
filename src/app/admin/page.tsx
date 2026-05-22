@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ACCOUNT_BANKS } from '@/lib/banks';
 import { copyToClipboard } from '@/lib/utils';
+import { useTheme } from '@/hooks/useTheme';
 import type { LinkData } from '@/lib/kv';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
 import QRCode from 'react-qr-code';
@@ -22,6 +23,8 @@ export default function AdminPage() {
   const [urlCopied, setUrlCopied] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const urlCopyTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const downloadQrWrapperRef = useRef<HTMLDivElement>(null);
 
   // Load history from server
   useEffect(() => {
@@ -49,7 +52,10 @@ export default function AdminPage() {
           body: JSON.stringify({ bankName, accountNumber, accountHolder, kakaoPayUrl }),
         });
 
-        if (!res.ok) throw new Error(`Failed to ${editingId ? 'update' : 'create'} link`);
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.error || `링크 ${editingId ? '수정' : '생성'}에 실패했습니다.`);
+        }
 
         const data = await res.json();
         
@@ -78,7 +84,8 @@ export default function AdminPage() {
         }, 100);
       } catch (error) {
         console.error(error);
-        alert(`링크 ${editingId ? '수정' : '생성'}에 실패했습니다.`);
+        const message = error instanceof Error ? error.message : `링크 ${editingId ? '수정' : '생성'}에 실패했습니다.`;
+        alert(message);
       } finally {
         setLoading(false);
       }
@@ -89,19 +96,22 @@ export default function AdminPage() {
   const copyUrl = useCallback(async (url: string) => {
     await copyToClipboard(url);
     setUrlCopied(true);
-    setTimeout(() => setUrlCopied(false), 2000);
+    clearTimeout(urlCopyTimerRef.current);
+    urlCopyTimerRef.current = setTimeout(() => setUrlCopied(false), 2000);
   }, []);
 
   const deleteItem = useCallback(async (id: string) => {
     if (!confirm('이 링크를 삭제하시겠습니까?')) return;
 
     try {
-      await fetch(`/api/links/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/links/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('삭제에 실패했습니다.');
       setHistory((prev) => prev.filter((item) => item.id !== id));
       if (result?.id === id) setResult(null);
       if (editingId === id) setEditingId(null);
     } catch (error) {
       console.error(error);
+      alert('링크 삭제에 실패했습니다.');
     }
   }, [result, editingId]);
 
@@ -122,41 +132,36 @@ export default function AdminPage() {
     setEditingId(null);
   }, []);
 
-  // Generate QR and download on demand instead of pre-rendering hidden QR codes
-  const downloadHistoryQR = useCallback((item: LinkResult) => {
-    // Create a temporary container to render the QR code
-    const container = document.createElement('div');
-    container.style.position = 'fixed';
-    container.style.opacity = '0';
-    container.style.pointerEvents = 'none';
-    document.body.appendChild(container);
+  // On-demand QR download: set state, render single QR, then download in useEffect
+  const [pendingDownload, setPendingDownload] = useState<{ item: LinkResult; format: 'png' | 'svg' } | null>(null);
 
-    // Fallback: use a canvas-based QR generator approach
-    // We'll render a hidden QR component and grab it
-    const hiddenQRId = `qr-download-${item.id}`;
-    const svg = document.getElementById(hiddenQRId);
+  const downloadHistoryQR = useCallback((item: LinkResult, format: 'png' | 'svg' = 'png') => {
+    setPendingDownload({ item, format });
+  }, []);
 
-    if (!svg) {
-      // If the hidden QR doesn't exist, we'll create the download link via the result section's QR
-      // For robustness, create a temporary QR
-      document.body.removeChild(container);
+  // Handle download after QR renders into the DOM
+  useEffect(() => {
+    if (!pendingDownload) return;
 
-      // Use the react-qr-code's SVG rendering approach via a temporary element
-      // Since we can't easily render React components in a callback, let's use the
-      // existing approach but only render for the item being downloaded
-      const tempDiv = document.createElement('div');
-      tempDiv.id = `temp-qr-${item.id}`;
-      tempDiv.style.position = 'fixed';
-      tempDiv.style.opacity = '0';
-      tempDiv.style.pointerEvents = 'none';
-      document.body.appendChild(tempDiv);
+    const { item, format } = pendingDownload;
+    const svg = downloadQrWrapperRef.current?.querySelector('svg');
+    if (!svg) return;
 
-      // We need to use the already-mounted QR codes. Let's keep hidden QRs but only
-      // for visible (filtered) items. This is already handled below.
-      document.body.removeChild(tempDiv);
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const blobUrl = URL.createObjectURL(svgBlob);
+
+    if (format === 'svg') {
+      const link = document.createElement('a');
+      link.download = `qrcode_${item.accountHolder}.svg`;
+      link.href = blobUrl;
+      link.click();
+      URL.revokeObjectURL(blobUrl);
+      setTimeout(() => setPendingDownload(null), 0);
       return;
     }
 
+    // PNG format
     const canvas = document.createElement('canvas');
     const size = 200;
     const scale = 3;
@@ -165,17 +170,14 @@ export default function AdminPage() {
 
     const ctx = canvas.getContext('2d');
     if (!ctx) {
-      document.body.removeChild(container);
+      URL.revokeObjectURL(blobUrl);
+      setTimeout(() => setPendingDownload(null), 0);
       return;
     }
 
     ctx.scale(scale, scale);
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, size + 40, size + 40);
-
-    const svgData = new XMLSerializer().serializeToString(svg);
-    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-    const blobUrl = URL.createObjectURL(svgBlob);
 
     const img = new Image();
     img.onload = () => {
@@ -186,14 +188,14 @@ export default function AdminPage() {
       link.download = `qrcode_${item.accountHolder}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
-      document.body.removeChild(container);
+      setTimeout(() => setPendingDownload(null), 0);
     };
     img.onerror = () => {
       URL.revokeObjectURL(blobUrl);
-      document.body.removeChild(container);
+      setTimeout(() => setPendingDownload(null), 0);
     };
     img.src = blobUrl;
-  }, []);
+  }, [pendingDownload]);
 
   // Memoize filtered history to avoid recalculating on every render
   const filteredHistory = useMemo(
@@ -203,35 +205,8 @@ export default function AdminPage() {
     [history, searchQuery]
   );
 
-  // Sync theme to platinum silver-white & manage dynamic meta theme colors
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', 'light');
-    document.body.setAttribute('data-theme', 'light');
-
-    let meta = document.querySelector('meta[name="theme-color"]');
-    let originalThemeColor: string | null = null;
-    if (meta) {
-      originalThemeColor = meta.getAttribute('content');
-      meta.setAttribute('content', '#f8f9fc');
-    } else {
-      meta = document.createElement('meta');
-      meta.setAttribute('name', 'theme-color');
-      meta.setAttribute('content', '#f8f9fc');
-      document.head.appendChild(meta);
-    }
-
-    return () => {
-      document.documentElement.removeAttribute('data-theme');
-      document.body.removeAttribute('data-theme');
-      if (meta) {
-        if (originalThemeColor) {
-          meta.setAttribute('content', originalThemeColor);
-        } else {
-          meta.remove();
-        }
-      }
-    };
-  }, []);
+  // Apply light theme
+  useTheme('light');
 
   return (
     <div className="public-page public-page--fullscreen" data-theme="light" style={{ overflowY: 'auto', padding: '40px 16px' }}>
@@ -513,10 +488,17 @@ export default function AdminPage() {
                     </button>
                     <button
                       className="history-item__btn"
-                      onClick={() => downloadHistoryQR(item)}
-                      title="QR저장"
+                      onClick={() => downloadHistoryQR(item, 'png')}
+                      title="PNG 다운로드"
                     >
-                      QR저장
+                      PNG
+                    </button>
+                    <button
+                      className="history-item__btn"
+                      onClick={() => downloadHistoryQR(item, 'svg')}
+                      title="SVG 다운로드"
+                    >
+                      SVG
                     </button>
                     <button
                       className="history-item__btn"
@@ -533,17 +515,6 @@ export default function AdminPage() {
                       삭제
                     </button>
                   </div>
-                  {/* Hidden QR Code for download - only render for filtered items */}
-                  <div style={{ display: 'none' }}>
-                    <QRCode
-                      id={`qr-download-${item.id}`}
-                      value={`${typeof window !== 'undefined' ? window.location.origin : ''}/p/${item.id}`}
-                      size={200}
-                      level="H"
-                      bgColor="#ffffff"
-                      fgColor="#000000"
-                    />
-                  </div>
                 </div>
               ))}
             </div>
@@ -556,6 +527,19 @@ export default function AdminPage() {
           </div>
         )}
       </div>
+
+      {/* Single hidden QR for on-demand download (O1 optimization) */}
+      {pendingDownload && (
+        <div ref={downloadQrWrapperRef} style={{ position: 'fixed', opacity: 0, pointerEvents: 'none', zIndex: -1 }}>
+          <QRCode
+            value={`${typeof window !== 'undefined' ? window.location.origin : ''}/p/${pendingDownload.item.id}`}
+            size={200}
+            level="H"
+            bgColor="#ffffff"
+            fgColor="#000000"
+          />
+        </div>
+      )}
     </div>
   );
 }

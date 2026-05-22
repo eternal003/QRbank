@@ -1,8 +1,12 @@
+import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import { getLink } from '@/lib/kv';
 import TransferPageClient from './TransferPageClient';
 
 export const runtime = 'edge';
+
+// Deduplicate getLink calls within a single request (generateMetadata + component)
+const getCachedLink = cache(getLink);
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -11,7 +15,7 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps) {
   const { id } = await params;
 
-  const link = await getLink(id);
+  const link = await getCachedLink(id);
 
   if (!link) {
     return { title: '페이지를 찾을 수 없습니다' };
@@ -35,7 +39,7 @@ export const viewport = {
 export default async function TransferPage({ params }: PageProps) {
   const { id } = await params;
 
-  const link = await getLink(id);
+  const link = await getCachedLink(id);
 
   if (!link) {
     notFound();

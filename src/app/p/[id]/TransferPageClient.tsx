@@ -1,41 +1,13 @@
 'use client';
 
-import { useEffect } from 'react';
 import CopyButton from '@/components/CopyButton';
 import BankAppButtons from '@/components/BankAppButtons';
+import { useTheme } from '@/hooks/useTheme';
 import type { LinkData } from '@/lib/kv';
 
 export default function TransferPageClient({ link }: { link: LinkData }) {
-  useEffect(() => {
-    // 최상위 html 및 body에 light 테마 속성을 적용하여 아이폰 세이프에어리어(다이나믹 아일랜드 & 홈바) 영역까지 실버-화이트 톤으로 꽉 차게 일치시킴
-    document.documentElement.setAttribute('data-theme', 'light');
-    document.body.setAttribute('data-theme', 'light');
+  useTheme('light');
 
-    // iOS 테마 컬러 메타 태그를 동적으로 설정하여 상/하단 시스템 영역을 실버-화이트로 일치시킴
-    let meta = document.querySelector('meta[name="theme-color"]');
-    let originalThemeColor: string | null = null;
-    if (meta) {
-      originalThemeColor = meta.getAttribute('content');
-      meta.setAttribute('content', '#f8f9fc');
-    } else {
-      meta = document.createElement('meta');
-      meta.setAttribute('name', 'theme-color');
-      meta.setAttribute('content', '#f8f9fc');
-      document.head.appendChild(meta);
-    }
-
-    return () => {
-      document.documentElement.removeAttribute('data-theme');
-      document.body.removeAttribute('data-theme');
-      if (meta) {
-        if (originalThemeColor) {
-          meta.setAttribute('content', originalThemeColor);
-        } else {
-          meta.remove();
-        }
-      }
-    };
-  }, []);
   return (
     <div className="public-page public-page--fullscreen" data-theme="light">
       {/* Holographic Light Background */}

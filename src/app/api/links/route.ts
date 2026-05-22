@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { saveLink, getAllLinks } from '@/lib/kv';
-import { generateId, sanitizeInput, cleanAccountNumber } from '@/lib/utils';
+import { saveLink, getAllLinks, getLink } from '@/lib/kv';
+import { generateId, sanitizeInput, cleanAccountNumber, isValidKakaoPayUrl } from '@/lib/utils';
 
 export const runtime = 'edge';
 
@@ -12,7 +12,15 @@ const MAX_KAKAOPAY_URL = 300;
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: '유효한 JSON 요청 본문이 필요합니다.' },
+        { status: 400 }
+      );
+    }
     const { bankName, accountNumber, accountHolder, kakaoPayUrl } = body;
 
     if (!bankName || !accountNumber || !accountHolder) {
@@ -35,6 +43,12 @@ export async function POST(request: NextRequest) {
         if (!/^https?:\/\//i.test(tempUrl)) {
           tempUrl = `https://${tempUrl}`;
         }
+        if (!isValidKakaoPayUrl(tempUrl)) {
+          return NextResponse.json(
+            { error: '허용되지 않는 카카오페이 URL입니다. qr.kakaopay.com 도메인만 사용 가능합니다.' },
+            { status: 400 }
+          );
+        }
         safeKakaoPayUrl = tempUrl;
       }
     }
@@ -46,7 +60,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const id = generateId(8);
+    // Generate unique ID with collision retry
+    let id = '';
+    let idIsUnique = false;
+    for (let i = 0; i < 3; i++) {
+      id = generateId(8);
+      const existing = await getLink(id);
+      if (!existing) { idIsUnique = true; break; }
+    }
+    if (!idIsUnique) {
+      return NextResponse.json(
+        { error: 'ID 생성에 실패했습니다. 다시 시도해주세요.' },
+        { status: 500 }
+      );
+    }
     const linkData = {
       id,
       bankName: safeBankName,

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLink, deleteLink, updateLink } from '@/lib/kv';
-import { sanitizeInput, cleanAccountNumber } from '@/lib/utils';
+import { sanitizeInput, cleanAccountNumber, isValidKakaoPayUrl } from '@/lib/utils';
 
 export const runtime = 'edge';
 
@@ -41,7 +41,15 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: '유효한 JSON 요청 본문이 필요합니다.' },
+        { status: 400 }
+      );
+    }
     const { bankName, accountNumber, accountHolder, kakaoPayUrl } = body;
 
     // Sanitize inputs
@@ -56,6 +64,12 @@ export async function PUT(
         tempUrl = sanitizeInput(tempUrl, MAX_KAKAOPAY_URL);
         if (!/^https?:\/\//i.test(tempUrl)) {
           tempUrl = `https://${tempUrl}`;
+        }
+        if (!isValidKakaoPayUrl(tempUrl)) {
+          return NextResponse.json(
+            { error: '허용되지 않는 카카오페이 URL입니다. qr.kakaopay.com 도메인만 사용 가능합니다.' },
+            { status: 400 }
+          );
         }
         updates.kakaoPayUrl = tempUrl;
       } else {
