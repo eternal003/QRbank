@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export default function proxy(request: NextRequest) {
+export const runtime = 'experimental-edge';
+
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // /admin 페이지 및 관리자 API(/api/links) 요청에 대해서만 검사합니다.
