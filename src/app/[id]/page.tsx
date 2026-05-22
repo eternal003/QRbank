@@ -1,6 +1,6 @@
 import { cache } from 'react';
 import { notFound } from 'next/navigation';
-import { getLink } from '@/lib/kv';
+import { getLink, incrementVisitorCount } from '@/lib/kv';
 import TransferPageClient from './TransferPageClient';
 
 export const runtime = 'edge';
@@ -44,6 +44,9 @@ export default async function TransferPage({ params }: PageProps) {
   if (!link) {
     notFound();
   }
+
+  // Increment visitor count (non-blocking error handling)
+  await incrementVisitorCount(id).catch(console.error);
 
   return <TransferPageClient link={link} />;
 }

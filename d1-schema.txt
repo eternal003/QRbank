@@ -8,5 +8,6 @@ CREATE TABLE IF NOT EXISTS links (
   accountNumber TEXT NOT NULL,
   accountHolder TEXT NOT NULL,
   kakaoPayUrl TEXT,
-  createdAt TEXT NOT NULL
+  createdAt TEXT NOT NULL,
+  visitorCount INTEGER DEFAULT 0
 );

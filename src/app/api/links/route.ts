@@ -81,12 +81,13 @@ export async function POST(request: NextRequest) {
       accountHolder: safeAccountHolder,
       kakaoPayUrl: safeKakaoPayUrl,
       createdAt: new Date().toISOString(),
+      visitorCount: 0,
     };
 
     await saveLink(linkData);
 
     const origin = request.nextUrl.origin;
-    const url = `${origin}/p/${id}`;
+    const url = `${origin}/${id}`;
 
     return NextResponse.json({
       url,

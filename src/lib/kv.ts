@@ -29,10 +29,19 @@ export interface LinkData {
   accountHolder: string;
   createdAt: string;
   kakaoPayUrl?: string;
+  visitorCount?: number;
 }
 
-// In-memory fallback for local development without Wrangler
-const inMemoryStore = new Map<string, LinkData>();
+// In-memory fallback for local development without Wrangler (using globalThis to share across HMR and bundles)
+const globalForKv = globalThis as unknown as {
+  inMemoryStore?: Map<string, LinkData>;
+};
+
+const inMemoryStore = globalForKv.inMemoryStore ?? new Map<string, LinkData>();
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForKv.inMemoryStore = inMemoryStore;
+}
 
 function getDb() {
   try {
@@ -49,12 +58,12 @@ export async function saveLink(data: LinkData): Promise<void> {
   const db = getDb();
   if (db) {
     await db.prepare(
-      'INSERT INTO links (id, bankName, accountNumber, accountHolder, kakaoPayUrl, createdAt) VALUES (?, ?, ?, ?, ?, ?)'
+      'INSERT INTO links (id, bankName, accountNumber, accountHolder, kakaoPayUrl, createdAt, visitorCount) VALUES (?, ?, ?, ?, ?, ?, ?)'
     ).bind(
-      data.id, data.bankName, data.accountNumber, data.accountHolder, data.kakaoPayUrl || null, data.createdAt
+      data.id, data.bankName, data.accountNumber, data.accountHolder, data.kakaoPayUrl || null, data.createdAt, 0
     ).run();
   } else {
-    inMemoryStore.set(data.id, data);
+    inMemoryStore.set(data.id, { ...data, visitorCount: 0 });
   }
 }
 
@@ -65,6 +74,19 @@ export async function getLink(id: string): Promise<LinkData | null> {
     return stmt || null;
   }
   return inMemoryStore.get(id) || null;
+}
+
+export async function incrementVisitorCount(id: string): Promise<void> {
+  const db = getDb();
+  if (db) {
+    await db.prepare('UPDATE links SET visitorCount = coalesce(visitorCount, 0) + 1 WHERE id = ?').bind(id).run();
+  } else {
+    const existing = inMemoryStore.get(id);
+    if (existing) {
+      existing.visitorCount = (existing.visitorCount || 0) + 1;
+      inMemoryStore.set(id, existing);
+    }
+  }
 }
 
 export async function getAllLinks(): Promise<LinkData[]> {
@@ -94,7 +116,7 @@ export async function updateLink(id: string, updates: Partial<LinkData>): Promis
     if (!existing) return null;
     // Protect immutable fields from being overwritten
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id: _id, createdAt: _ca, ...safeUpdates } = updates as Record<string, unknown>;
+    const { id: _id, createdAt: _ca, visitorCount: _vc, ...safeUpdates } = updates as Record<string, unknown>;
     const merged = { ...existing, ...safeUpdates } as LinkData;
     await db.prepare(
       'UPDATE links SET bankName = ?, accountNumber = ?, accountHolder = ?, kakaoPayUrl = ? WHERE id = ?'
@@ -107,7 +129,7 @@ export async function updateLink(id: string, updates: Partial<LinkData>): Promis
   const existing = inMemoryStore.get(id);
   if (existing) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id: _id, createdAt: _ca, ...safeUpdates } = updates as Record<string, unknown>;
+    const { id: _id, createdAt: _ca, visitorCount: _vc, ...safeUpdates } = updates as Record<string, unknown>;
     const merged = { ...existing, ...safeUpdates } as LinkData;
     inMemoryStore.set(id, merged);
     return merged;

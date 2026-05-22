@@ -61,7 +61,7 @@ export default function AdminPage() {
         
         // update result if we're viewing it
         if (!editingId || result?.id === editingId) {
-          data.url = data.url || `${window.location.origin}/p/${data.id}`;
+          data.url = data.url || `${window.location.origin}/${data.id}`;
           setResult(data);
         }
 
@@ -80,7 +80,7 @@ export default function AdminPage() {
 
         // Scroll to result so user sees it
         setTimeout(() => {
-          document.getElementById('result-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          document.getElementById('result-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 100);
       } catch (error) {
         console.error(error);
@@ -473,6 +473,13 @@ export default function AdminPage() {
                           카카오페이
                         </span>
                       )}
+                      <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px', background: 'rgba(0, 0, 0, 0.05)', color: 'var(--text-secondary)', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '4px' }} title="방문자 수(조회수)">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                        {item.visitorCount || 0}
+                      </span>
                     </span>
                     <span className="history-item__account" style={{ color: 'var(--text-muted)', fontFamily: 'monospace', letterSpacing: '0.02em', fontSize: '0.8rem' }}>
                       {item.accountNumber}
@@ -502,7 +509,7 @@ export default function AdminPage() {
                     </button>
                     <button
                       className="history-item__btn"
-                      onClick={() => copyUrl(item.url || `${window.location.origin}/p/${item.id}`)}
+                      onClick={() => copyUrl(item.url || `${window.location.origin}/${item.id}`)}
                       title="링크 복사"
                     >
                       복사
@@ -532,7 +539,7 @@ export default function AdminPage() {
       {pendingDownload && (
         <div ref={downloadQrWrapperRef} style={{ position: 'fixed', opacity: 0, pointerEvents: 'none', zIndex: -1 }}>
           <QRCode
-            value={`${typeof window !== 'undefined' ? window.location.origin : ''}/p/${pendingDownload.item.id}`}
+            value={`${typeof window !== 'undefined' ? window.location.origin : ''}/${pendingDownload.item.id}`}
             size={200}
             level="H"
             bgColor="#ffffff"
