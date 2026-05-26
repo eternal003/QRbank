@@ -28,6 +28,9 @@ export const metadata: Metadata = {
     index: false,
     follow: false,
   },
+  icons: {
+    icon: 'data:,',
+  },
 };
 
 export const viewport = {
