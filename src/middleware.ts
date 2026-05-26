@@ -63,7 +63,7 @@ function getClientIp(request: NextRequest): string {
          '127.0.0.1';
 }
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // /admin 페이지 및 관리자 API(/api/links) 요청에 대해서만 검사합니다.
@@ -150,6 +150,7 @@ export function proxy(request: NextRequest) {
 }
 
 // 미들웨어가 작동할 경로 지정
+// Cloudflare Pages는 Edge Runtime이 필수입니다.
 export const runtime = 'experimental-edge';
 
 export const config = {
