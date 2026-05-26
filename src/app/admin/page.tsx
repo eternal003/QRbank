@@ -58,7 +58,7 @@ export default function AdminPage() {
         }
 
         const data = await res.json();
-        
+
         // update result if we're viewing it
         if (!editingId || result?.id === editingId) {
           data.url = data.url || `${window.location.origin}/${data.id}`;
@@ -295,7 +295,7 @@ export default function AdminPage() {
                 id="kakaoPayUrl"
                 type="text"
                 className="form-input"
-                placeholder="예: https://qr.kakaopay.com/... (비워두면 기존 방식으로 동작)"
+                placeholder="예: https://qr.kakaopay.com/... (비워두면 없이)"
                 value={kakaoPayUrl}
                 onChange={(e) => setKakaoPayUrl(e.target.value)}
               />
