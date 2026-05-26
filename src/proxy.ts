@@ -150,6 +150,8 @@ export function proxy(request: NextRequest) {
 }
 
 // 미들웨어가 작동할 경로 지정
+export const runtime = 'experimental-edge';
+
 export const config = {
   matcher: ['/admin/:path*', '/api/links/:path*'],
 };
