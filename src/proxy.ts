@@ -63,7 +63,7 @@ function getClientIp(request: NextRequest): string {
          '127.0.0.1';
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // /admin 페이지 및 관리자 API(/api/links) 요청에 대해서만 검사합니다.
