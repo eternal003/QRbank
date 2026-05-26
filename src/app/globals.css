@@ -825,16 +825,14 @@ body {
   bottom: 40px;
   left: 50%;
   transform: translateX(-50%) translateY(30px);
-  background: var(--bg-card);
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
+  background: #1c1c1e; /* Solid background for dark mode (no glass effect) */
   color: var(--text-primary);
   padding: 14px 28px;
   border-radius: var(--radius-full);
   font-size: 0.9rem;
   font-weight: 600;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06), inset 0 1.5px 3px rgba(255, 255, 255, 0.8);
-  border: 1px solid var(--border-glass);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   z-index: 9999;
   opacity: 0;
   transition: all var(--transition-base);
@@ -849,8 +847,22 @@ body {
 }
 
 .toast--success {
-  border-color: rgba(16, 185, 129, 0.4);
+  border-color: rgba(16, 185, 129, 0.5);
+  background: #1c1c1e; /* Solid background to prevent glass effect in dark mode */
+}
+
+/* Light Theme Override: Beautiful Glassy Toast */
+[data-theme="light"] .toast {
   background: var(--bg-card);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06), inset 0 1.5px 3px rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--border-glass);
+}
+
+[data-theme="light"] .toast--success {
+  background: var(--bg-card);
+  border-color: rgba(16, 185, 129, 0.4);
 }
 
 /* ===== Animations ===== */
