@@ -24,6 +24,10 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "default",
   },
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export const viewport = {
