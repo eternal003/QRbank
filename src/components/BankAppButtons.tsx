@@ -9,12 +9,13 @@ interface BankAppButtonsProps {
   bankName: string;
   accountNumber: string;
   kakaoPayUrl?: string;
+  currentMode?: 'light' | 'dark';
 }
 
 // Featured apps (displayed as large prominent buttons)
 const FEATURED_CODES = ['toss', 'kakaopay'];
 
-export default function BankAppButtons({ bankName, accountNumber, kakaoPayUrl }: BankAppButtonsProps) {
+export default function BankAppButtons({ bankName, accountNumber, kakaoPayUrl, currentMode = 'light' }: BankAppButtonsProps) {
   const [copiedFor, setCopiedFor] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -97,7 +98,7 @@ export default function BankAppButtons({ bankName, accountNumber, kakaoPayUrl }:
             {bank.logo ? (
               <img
                 src={bank.logo}
-                alt={bank.name}
+                alt={`${bank.name} 로고`}
                 className="bank-featured-btn__logo-only"
               />
             ) : (

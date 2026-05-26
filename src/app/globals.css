@@ -2,18 +2,18 @@
 
 /* ===== Design Tokens ===== */
 :root {
-  /* Colors - Dark Admin Theme */
-  --bg-primary: #0a0a0f;
-  --bg-secondary: #12121a;
-  --bg-card: rgba(255, 255, 255, 0.04);
-  --bg-card-hover: rgba(255, 255, 255, 0.07);
-  --bg-glass: rgba(255, 255, 255, 0.06);
-  --border-glass: rgba(255, 255, 255, 0.1);
-  --border-subtle: rgba(255, 255, 255, 0.06);
+  /* Colors - Dark Theme (Apple iOS Style) */
+  --bg-primary: #000000;
+  --bg-secondary: #1c1c1e;
+  --bg-card: rgba(28, 28, 30, 0.6);
+  --bg-card-hover: rgba(44, 44, 46, 0.8);
+  --bg-glass: rgba(255, 255, 255, 0.08);
+  --border-glass: rgba(255, 255, 255, 0.15);
+  --border-subtle: rgba(255, 255, 255, 0.08);
 
   --text-primary: #ffffff;
-  --text-secondary: #a1a1aa;
-  --text-muted: #71717a;
+  --text-secondary: rgba(235, 235, 245, 0.6);
+  --text-muted: rgba(235, 235, 245, 0.3);
 
   --accent: #6366f1;
   --accent-light: #818cf8;
@@ -39,8 +39,8 @@
 
   /* Radius */
   --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
   --radius-xl: 24px;
   --radius-full: 9999px;
 
@@ -107,6 +107,10 @@ body {
   min-height: 100vh;
   overscroll-behavior: none;
   overscroll-behavior-y: none;
+}
+
+* {
+  font-family: inherit;
 }
 
 /* ===== Scrollbar ===== */
@@ -247,7 +251,7 @@ body {
 }
 
 .btn:active {
-  transform: scale(0.97);
+  transform: scale(0.96);
 }
 
 .btn--primary {
@@ -262,7 +266,7 @@ body {
 }
 
 .btn--primary:active {
-  transform: translateY(0) scale(0.97);
+  transform: translateY(0) scale(0.96);
 }
 
 .btn--secondary {
@@ -297,17 +301,16 @@ body {
   transform: none !important;
 }
 
-/* ===== Premium Copy Card (Holographic Light) ===== */
+/* ===== Premium Copy Card (Sleek Dark / Holographic Light) ===== */
 .copy-section {
   display: flex;
   align-items: center;
   gap: var(--space-md);
   padding: var(--space-lg) var(--space-xl);
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(30px);
-  border: 1px solid rgba(255, 255, 255, 1);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05), inset 0 2px 4px rgba(255, 255, 255, 0.8);
+  /* Default: Sleek Dark Theme (Solid premium border) */
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  box-shadow: var(--shadow-md);
   border-radius: var(--radius-xl);
   margin-bottom: var(--space-md);
   position: relative;
@@ -322,18 +325,36 @@ body {
 }
 
 .copy-section:hover {
-  background: rgba(255, 255, 255, 0.85);
-  border-color: rgba(255, 255, 255, 1);
-  box-shadow: 0 14px 45px rgba(0, 0, 0, 0.07);
+  background: var(--bg-card-hover);
+  border-color: var(--border-glass);
+  box-shadow: var(--shadow-lg);
   transform: translateY(-1px);
 }
 
 .copy-section:active {
-  transform: scale(0.98) translateY(0);
+  transform: scale(0.96) translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Light Theme Override: Beautiful Holographic Glass Card */
+[data-theme="light"] .copy-section {
+  background: var(--bg-glass);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05), inset 0 2px 4px rgba(255, 255, 255, 0.8);
+}
+
+[data-theme="light"] .copy-section:hover {
+  background: var(--bg-card);
+  box-shadow: 0 14px 45px rgba(0, 0, 0, 0.07);
+}
+
+[data-theme="light"] .copy-section:active {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
 }
 
-.copy-section::before {
+/* Shine Sweep Animation: Light Theme Only */
+[data-theme="light"] .copy-section::before {
   content: '';
   position: absolute;
   top: 0;
@@ -429,10 +450,10 @@ body {
   align-items: center;
   gap: var(--space-lg);
   padding: var(--space-lg) var(--space-xl);
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--bg-glass);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--border-glass);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
   border-radius: var(--radius-lg);
   cursor: pointer;
@@ -446,23 +467,24 @@ body {
 }
 
 .bank-featured-btn:hover {
-  background: rgba(255, 255, 255, 0.9);
-  border-color: #ffffff;
+  background: var(--bg-card-hover);
+  border-color: var(--border-glass);
   transform: translateY(-2px);
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
 }
 
 .bank-featured-btn:active {
-  transform: translateY(0) scale(0.97);
+  transform: scale(0.96);
+  background: var(--bg-glass);
 }
 
 .bank-featured-btn__logo-only {
   height: auto;
-  max-height: 32px;
+  max-height: 42px;
   width: auto;
   max-width: 120px;
   object-fit: contain;
-  border-radius: 6px;
+  border-radius: 10px;
   flex-shrink: 0;
   transition: transform var(--transition-fast);
 }
@@ -803,16 +825,16 @@ body {
   bottom: 40px;
   left: 50%;
   transform: translateX(-50%) translateY(30px);
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--bg-card);
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
-  color: #111827;
+  color: var(--text-primary);
   padding: 14px 28px;
   border-radius: var(--radius-full);
   font-size: 0.9rem;
   font-weight: 600;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06), inset 0 1.5px 3px rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--border-glass);
   z-index: 9999;
   opacity: 0;
   transition: all var(--transition-base);
@@ -828,7 +850,7 @@ body {
 
 .toast--success {
   border-color: rgba(16, 185, 129, 0.4);
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--bg-card);
 }
 
 /* ===== Animations ===== */
@@ -906,7 +928,7 @@ body {
 
 /* ===== Public Page Special Styles ===== */
 .public-page {
-  background: linear-gradient(180deg, #f3f4f6 0%, #f9fafb 30%, #ffffff 100%);
+  background: var(--bg-primary);
   min-height: 100vh;
 }
 
@@ -1079,10 +1101,10 @@ body {
   align-items: center;
   justify-content: center;
   position: relative;
-  background: rgba(255, 255, 255, 0.55);
+  background: var(--bg-glass);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--border-glass);
   box-shadow: 0 0px 10px rgba(0, 0, 0, 0.08);
   border-radius: 14px;
   padding: 12px 4px 10px;
@@ -1092,14 +1114,14 @@ body {
 }
 
 .bank-grid-compact__item:hover {
-  background: rgba(255, 255, 255, 0.9);
-  border-color: #ffffff;
+  background: var(--bg-card-hover);
   transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .bank-grid-compact__item:active {
-  transform: scale(0.95);
+  transform: scale(0.96);
+  background: var(--bg-glass);
 }
 
 .bank-grid-compact__logo-container {
@@ -1117,7 +1139,6 @@ body {
   height: 42px;
   object-fit: cover;
   border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .bank-grid-compact__logo-fallback {
@@ -1412,7 +1433,7 @@ body {
   width: 100%;
   height: 100%;
   z-index: -1;
-  background-color: #f9fafb;
+  background-color: var(--bg-primary);
   overflow: hidden;
   pointer-events: none;
 }
@@ -1566,17 +1587,23 @@ body {
   box-shadow: 0 2px 6px var(--accent-glow);
 }
 
-/* ===== Loading Animation (Circular Reveal) ===== */
+/* ===== Minimal Loading & Cascading Slide-up ===== */
 .loading-screen-overlay {
   position: fixed;
   inset: 0;
-  z-index: 10;
+  z-index: 50;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%);
-  color: #334155;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+.loading-screen-overlay.fade-out {
+  opacity: 0;
+  visibility: hidden;
 }
 
 .loading-screen-content {
@@ -1587,64 +1614,88 @@ body {
 }
 
 .loading-screen-icon {
-  width: 56px;
-  height: 56px;
-  color: #475569;
+  width: 48px;
+  height: 48px;
+  color: var(--text-secondary);
   margin-bottom: 20px;
-  animation: spin 1s linear infinite;
+  animation: spin 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 .loading-screen-text {
   font-family: var(--font-heading);
-  font-weight: 700;
-  font-size: 1.1rem;
-  color: #334155;
-  opacity: 0.9;
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--text-primary);
   letter-spacing: -0.02em;
   animation: pulse-loading 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 @keyframes pulse-loading {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.98); }
+}
 
-  0%,
+/* Cascading Slide Up */
+.stagger-item {
+  opacity: 0; /* starts hidden */
+}
+
+.reveal-content .stagger-1 {
+  animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s forwards;
+}
+
+.reveal-content .stagger-2 {
+  animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s forwards;
+}
+
+.reveal-content .stagger-3 {
+  animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.3s forwards;
+}
+
+@keyframes slideUpFade {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
   100% {
     opacity: 1;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: 0.6;
-    transform: scale(0.98);
+    transform: translateY(0);
   }
 }
 
-/* Circular Reveal Classes */
-.page-hidden {
-  clip-path: circle(0% at 50% 50%);
-  pointer-events: none;
+
+/* Theme Toggle Button */
+.theme-toggle-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 100;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
 }
 
-.page-reveal {
-  animation: circleExpand 0.8s cubic-bezier(0.7, 0, 0.2, 1) forwards;
-  pointer-events: auto;
+.theme-toggle-btn:hover {
+  transform: scale(1.05);
+  background: var(--bg-card-hover);
 }
 
-@keyframes circleExpand {
-  0% {
-    clip-path: circle(0% at 50% 50%);
-  }
-
-  100% {
-    clip-path: circle(150% at 50% 50%);
-  }
+.theme-toggle-btn:active {
+  transform: scale(0.95);
 }
