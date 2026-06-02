@@ -26,8 +26,6 @@ export default function QRCodeDisplay({ value, size = 200 }: QRCodeDisplayProps)
     if (!ctx) return;
 
     ctx.scale(scale, scale);
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, size + 40, size + 40);
 
     const svgData = new XMLSerializer().serializeToString(svg);
     const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
@@ -70,7 +68,7 @@ export default function QRCodeDisplay({ value, size = 200 }: QRCodeDisplayProps)
           value={value}
           size={size}
           level="H"
-          bgColor="#ffffff"
+          bgColor="transparent"
           fgColor="#000000"
         />
       </div>

@@ -176,8 +176,6 @@ export default function AdminPage() {
     }
 
     ctx.scale(scale, scale);
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, size + 40, size + 40);
 
     const img = new Image();
     img.onload = () => {
@@ -542,7 +540,7 @@ export default function AdminPage() {
             value={`${typeof window !== 'undefined' ? window.location.origin : ''}/${pendingDownload.item.id}`}
             size={200}
             level="H"
-            bgColor="#ffffff"
+            bgColor="transparent"
             fgColor="#000000"
           />
         </div>
