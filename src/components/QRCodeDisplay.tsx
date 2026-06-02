@@ -19,8 +19,8 @@ export default function QRCodeDisplay({ value, size = 200 }: QRCodeDisplayProps)
 
     const canvas = document.createElement('canvas');
     const scale = 3; // High DPI
-    canvas.width = (size + 40) * scale;
-    canvas.height = (size + 40) * scale;
+    canvas.width = size * scale;
+    canvas.height = size * scale;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -33,7 +33,7 @@ export default function QRCodeDisplay({ value, size = 200 }: QRCodeDisplayProps)
 
     const img = new Image();
     img.onload = () => {
-      ctx.drawImage(img, 20, 20, size, size);
+      ctx.drawImage(img, 0, 0, size, size);
       URL.revokeObjectURL(url);
 
       const link = document.createElement('a');

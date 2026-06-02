@@ -165,8 +165,8 @@ export default function AdminPage() {
     const canvas = document.createElement('canvas');
     const size = 200;
     const scale = 3;
-    canvas.width = (size + 40) * scale;
-    canvas.height = (size + 40) * scale;
+    canvas.width = size * scale;
+    canvas.height = size * scale;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) {
@@ -179,7 +179,7 @@ export default function AdminPage() {
 
     const img = new Image();
     img.onload = () => {
-      ctx.drawImage(img, 20, 20, size, size);
+      ctx.drawImage(img, 0, 0, size, size);
       URL.revokeObjectURL(blobUrl);
 
       const link = document.createElement('a');
