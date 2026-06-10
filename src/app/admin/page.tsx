@@ -207,7 +207,7 @@ export default function AdminPage() {
   useTheme('light');
 
   return (
-    <div className="public-page public-page--fullscreen" data-theme="light" style={{ overflowY: 'auto', padding: '40px 16px' }}>
+    <div className="public-page" data-theme="light" style={{ minHeight: '100vh', overflowY: 'auto', padding: '40px 16px' }}>
       {/* Holographic Light Background */}
       <div className="hologram-bg">
         <div className="hologram-bg__blob hologram-bg__blob--1"></div>
@@ -215,7 +215,7 @@ export default function AdminPage() {
         <div className="hologram-bg__blob hologram-bg__blob--3"></div>
       </div>
 
-      <div className="transfer-layout hologram-glass" style={{ maxWidth: '680px', margin: '0 auto', width: '100%', minHeight: 'auto', display: 'flex', flexDirection: 'column', gap: '28px', padding: '40px 32px' }}>
+      <div className="hologram-glass" style={{ maxWidth: '680px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '28px', padding: '40px 32px', borderRadius: 'var(--radius-xl)' }}>
         <div className="page-header animate-slide-up" style={{ animationDelay: '0.05s', padding: 0, margin: 0, textAlign: 'center' }}>
           <h1 className="page-title" style={{
             background: 'var(--accent-gradient)',
