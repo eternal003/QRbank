@@ -8,7 +8,7 @@ if (process.env.NODE_ENV === 'development') {
 
 const nextConfig: NextConfig = {
   /* config options here */
-  allowedDevOrigins: ['192.168.219.200', '192.168.219.194', '192.168.219.138'],
+  allowedDevOrigins: ['192.168.219.200', '192.168.219.194', '192.168.219.138', '192.168.219.48'],
 
   // 보안 헤더: 클릭재킹, MIME 스니핑, 리퍼러 노출, 불필요한 브라우저 API 접근 차단
   async headers() {

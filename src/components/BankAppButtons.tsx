@@ -29,6 +29,8 @@ export default function BankAppButtons({ bankName, accountNumber, kakaoPayUrl, c
     return !FEATURED_CODES.includes(b.code);
   }), [kakaoPayUrl]);
 
+  const [fallbackStoreUrl, setFallbackStoreUrl] = useState<string | null>(null);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setMounted(true);
@@ -41,6 +43,7 @@ export default function BankAppButtons({ bankName, accountNumber, kakaoPayUrl, c
 
   const handleBankClick = useCallback(
     async (bank: (typeof BANKS)[number]) => {
+      setFallbackStoreUrl(null); // Reset fallback on new click
       const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
       const isAndroid = /Android/i.test(userAgent);
 
@@ -60,6 +63,14 @@ export default function BankAppButtons({ bankName, accountNumber, kakaoPayUrl, c
         } else {
           const tossUrl = `supertoss://send?bank=${encodeURIComponent(bankName)}&accountNo=${cleanAccountNo}`;
           window.location.href = tossUrl;
+          
+          if (bank.iosAppId) {
+            setTimeout(() => {
+              if (!document.hidden) {
+                setFallbackStoreUrl(`https://apps.apple.com/kr/app/id${bank.iosAppId}`);
+              }
+            }, 2000);
+          }
         }
         return;
       }
@@ -73,6 +84,14 @@ export default function BankAppButtons({ bankName, accountNumber, kakaoPayUrl, c
       } else {
         // iOS Safari 등은 기존 방식대로 제스처 차단 정책을 피하기 위해 동기적 즉시 딥링크 실행
         window.location.href = bank.appScheme;
+        
+        if (bank.iosAppId) {
+          setTimeout(() => {
+            if (!document.hidden) {
+              setFallbackStoreUrl(`https://apps.apple.com/kr/app/id${bank.iosAppId}`);
+            }
+          }, 2000);
+        }
       }
 
       copyToClipboard(accountNumber).catch(console.error);
@@ -165,11 +184,35 @@ export default function BankAppButtons({ bankName, accountNumber, kakaoPayUrl, c
       {/* Toast for copy feedback */}
       {mounted && createPortal(
         <div 
-          className={`toast toast--success ${copiedFor ? 'toast--visible' : ''}`}
+          className={`toast toast--success ${copiedFor && !fallbackStoreUrl ? 'toast--visible' : ''}`}
           role="status"
           aria-live="polite"
         >
           ✓ 계좌번호 복사 후 앱을 실행합니다
+        </div>,
+        document.body
+      )}
+
+      {/* Fallback Banner for iOS */}
+      {mounted && createPortal(
+        <div className={`toast toast--fallback ${fallbackStoreUrl ? 'toast--visible' : ''}`}>
+          <div className="toast--fallback-content">
+            <span className="toast--fallback-text">앱이 열리지 않나요?</span>
+            <div className="toast--fallback-actions">
+              <button 
+                onClick={() => setFallbackStoreUrl(null)}
+                className="toast--fallback-btn-close"
+              >
+                닫기
+              </button>
+              <a 
+                href={fallbackStoreUrl || '#'}
+                className="toast--fallback-btn-store"
+              >
+                스토어 가기
+              </a>
+            </div>
+          </div>
         </div>,
         document.body
       )}
