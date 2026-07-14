@@ -2,11 +2,11 @@
 
 /* ===== Design Tokens ===== */
 :root {
-  /* Colors - Dark Theme (Apple iOS Style) */
-  --bg-primary: #000000;
-  --bg-secondary: #1c1c1e;
-  --bg-card: rgba(28, 28, 30, 0.6);
-  --bg-card-hover: rgba(44, 44, 46, 0.8);
+  /* Colors - Dark Theme (Premium Sleek Dark Grey) */
+  --bg-primary: #121214;
+  --bg-secondary: #1e1e22;
+  --bg-card: rgba(30, 30, 34, 0.6);
+  --bg-card-hover: rgba(45, 45, 50, 0.8);
   --bg-glass: rgba(255, 255, 255, 0.08);
   --border-glass: rgba(255, 255, 255, 0.15);
   --border-subtle: rgba(255, 255, 255, 0.08);

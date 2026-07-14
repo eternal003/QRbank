@@ -16,7 +16,7 @@ export function useTheme(initialTheme: 'light' | 'dark' | 'system' = 'system') {
       document.documentElement.setAttribute('data-theme', activeTheme);
       document.body.setAttribute('data-theme', activeTheme);
 
-      const themeColor = activeTheme === 'light' ? '#f8f9fc' : '#000000';
+      const themeColor = activeTheme === 'light' ? '#f8f9fc' : '#121214';
 
       let meta = document.querySelector('meta[name="theme-color"]');
       if (meta) {
